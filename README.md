@@ -2,7 +2,7 @@
 Makes it easier to download and install the latest nightly build of the Krita Android APK by automatising the whole workflow.\
 The APK is only tested on a Samsung Galaxy Tab S3 using S Pen / STAEDTLER Noris digital (pressure sensitivity works perfectly with both of them) and a cheap bluetooth keyboard. The downloader is only tested on Windows 10. If you experience any issues on other platforms, please let me know.
 
-## Before use install Krita on android...
+## Before using Krita on android...
 **Please keep in mind the followings:**
 - the android version is in alpha state so it can have some glitches
 - you will only be able to use it on an android tablet, the resolution is not suitable for phones at the moment
