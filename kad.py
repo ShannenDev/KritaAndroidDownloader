@@ -72,7 +72,7 @@ class Krita:
             self.file_url = self.file_url.replace('-unsigned', '')
         else:
             try:
-                Console.display_message('Signing the apk')
+                Console.display_message('Signing the apk (it can take a few minutes)')
                 signing_status = str(check_output(['jarsigner', '-keystore', file_path,
                                                    '-storepass', pwd, self.file_url, name]))
                 if 'jar signed.' in signing_status:
@@ -139,12 +139,12 @@ class Device:
             else:
                 Console.display_error('Uninstall unsuccessful')
 
-    def install(self, file_url):
+    def install(self, file_url, app_name):
         if self.__to_install__:
             try:
-                Console.display_message('Installing new version')
+                Console.display_message('Installing new version (it can take a few minutes)')
                 install_status = str(check_output(['adb', 'install', file_url]))
-                if 'Success' in install_status:
+                if 'Success' in install_status and check_output(['adb', 'shell', 'pm', 'list', 'packages', app_name]):
                     Console.display_message('Install successful')
                 else:
                     Console.display_error('Install unsuccessful')
@@ -166,7 +166,7 @@ def main():
                config.get("keystore_config", "name"))
 
     device.uninstall(krita.app_name)
-    device.install(krita.file_url)
+    device.install(krita.file_url, krita.app_name)
 
     Console.display_message('Done!')
     input("Press Enter to exit...")
