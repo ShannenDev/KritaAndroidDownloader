@@ -33,27 +33,31 @@ class Config:
 
 
 class Krita:
-    __base_url__ = "https://binary-factory.kde.org/view/all/job/Krita_Nightly_Android_Build/"
-    __download_url__ = "lastSuccessfulBuild/artifact/krita_build_apk-release-unsigned.apk"
+    __base_url__ = "https://binary-factory.kde.org/job/Krita_Nightly_Android_Build/"
 
     app_name = 'org.krita'
     required_space = 1.5
 
-    def __init__(self, file_path):
-        Console.display_message('Checking new version')
+    def __init__(self, file_path, version=''):
+        if not version:
+            Console.display_message('Checking new version')
 
-        self.__build_version__ = 'undefined'
+            self.__build_version__ = 'undefined'
 
-        res = get(self.__base_url__)
-        res = str(res.content).split("\\n")
-        for item in res:
-            if 'Last stable build' in item:
-                self.__build_version__ = item.split('(')[1].split(')')[0].replace('#', '')
+            res = get(self.__base_url__, verify=False)
+            res = str(res.content).split("\\n")
+            for item in res:
+                if 'Last stable build' in item:
+                    self.__build_version__ = item.split('(')[1].split(')')[0].replace('#', '')
+                    Console.display_message(f'Latest version: {self.__build_version__}')
+        else:
+            self.__build_version__ = version
 
         if not file_path[-1] is '/' and file_path[-1] is not '\\':
             file_path += '/'
 
         self.file_url = f'{file_path}krita_build_apk-release-{self.__build_version__}-unsigned.apk'
+        self.__download_url__ = f'{self.__build_version__}/artifact/krita_build_apk-release-unsigned.apk'
 
     def download(self):
         if path.exists(self.file_url) or path.exists(self.file_url.replace('-unsigned', '')):
@@ -61,7 +65,7 @@ class Krita:
         else:
             Console.display_message(
                 f'Downloading from: {self.__base_url__ + self.__download_url__} (it can take a few minutes)')
-            apk = get(self.__base_url__ + self.__download_url__)
+            apk = get(self.__base_url__ + self.__download_url__, verify=False)
 
             Console.display_message('Saving the downloaded file')
             open(self.file_url, 'wb').write(apk.content)
@@ -129,10 +133,14 @@ class Device:
             except CalledProcessError:
                 Console.display_error('An error has occured during device checking')
 
-    def uninstall(self, app_name):
+    def uninstall(self, app_name, keep=''):
         if self.__to_uninstall__ and self.__to_install__:
             Console.display_message('Uninstalling old version')
-            uninstall_status = str(check_output(['adb', 'shell', 'cmd', 'package', 'uninstall', '-k', app_name]))
+
+            if keep.lower() is not 'n' and keep.lower() is not 'no':
+                uninstall_status = str(check_output(['adb', 'shell', 'cmd', 'package', 'uninstall', '-k', app_name]))
+            else:
+                uninstall_status = str(check_output(['adb', 'shell', 'cmd', 'package', 'uninstall', app_name]))
 
             if 'Success' in uninstall_status:
                 Console.display_message('Uninstall successful')
@@ -147,7 +155,10 @@ class Device:
                 if 'Success' in install_status and check_output(['adb', 'shell', 'pm', 'list', 'packages', app_name]):
                     Console.display_message('Install successful')
                 else:
-                    Console.display_error('Install unsuccessful')
+                    Console.display_error('Install unsuccessful.\n'
+                                          'Suggestions:\n'
+                                          '   - try a different version\n'
+                                          '   - try a fully uninstall and reinstall the current one')
             except CalledProcessError:
                 Console.display_error('Install unsuccessful')
 
@@ -155,7 +166,9 @@ class Device:
 def main():
     config = Config()
     device = Device()
-    krita = Krita(config.get("apk_config", "path"))
+
+    version = input("Version: [latest] ")
+    krita = Krita(config.get("apk_config", "path"), version)
 
     device.check_connection()
     device.check_space(krita.required_space, krita.app_name)
@@ -165,7 +178,8 @@ def main():
                config.get("keystore_config", "password"),
                config.get("keystore_config", "name"))
 
-    device.uninstall(krita.app_name)
+    keep = input("Do you want the keep all user data? [Y/n] ")
+    device.uninstall(krita.app_name, keep)
     device.install(krita.file_url, krita.app_name)
 
     Console.display_message('Done!')
