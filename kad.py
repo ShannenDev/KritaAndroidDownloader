@@ -138,7 +138,7 @@ class Device:
                 else:
                     Console.display_message('Could not check the available space, proceeding')
             except CalledProcessError:
-                Console.display_error('An error has occured during device checking')
+                Console.display_error('An error has occurred during device checking')
 
     def uninstall(self, app_name):
         if self.__to_uninstall__ and self.__to_install__:
