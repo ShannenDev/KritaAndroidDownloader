@@ -34,28 +34,18 @@ class Config:
 
 class Krita:
     __base_url__ = "https://binary-factory.kde.org/job/Krita_Nightly_Android_Build/"
+    __latest__ = False
 
     app_name = 'org.krita'
     required_space = 1.5
 
     def __init__(self, file_path, version=''):
         if not version:
-            Console.display_message('Checking new version')
-
-            self.__build_version__ = 'undefined'
-
-            res = get(self.__base_url__, verify=False)
-
-            if res.status_code is not 200:
-                Console.display_error(f'Version check failed, response statue: {res.status_code}')
-
-            res = str(res.content).split("\\n")
-            for item in res:
-                if 'Last stable build' in item:
-                    self.__build_version__ = item.split('(')[1].split(')')[0].replace('#', '')
-                    Console.display_message(f'Latest version: {self.__build_version__}')
+            self.__build_version__ = self.__get_latest_version_number__()
+            self.__latest__ = True
         else:
             self.__build_version__ = version
+            self.__latest__ = False
 
         if not file_path[-1] is '/' and file_path[-1] is not '\\':
             file_path += '/'
@@ -63,10 +53,35 @@ class Krita:
         self.file_url = f'{file_path}krita_build_apk-release-{self.__build_version__}-unsigned.apk'
         self.__download_url__ = f'{self.__build_version__}/artifact/krita_build_apk-release-unsigned.apk'
 
+    def __get_latest_version_number__(self):
+        Console.display_message('Checking latest version')
+
+        res = get(self.__base_url__, verify=False)
+
+        if res.status_code is not 200:
+            Console.display_error(f'Version check failed, response statue: {res.status_code}')
+
+        res = str(res.content).split("\\n")
+        for item in res:
+            if 'Last stable build' in item:
+                latest_version = item.split('(')[1].split(')')[0].replace('#', '')
+                Console.display_message(f'Latest version: {latest_version}')
+                return latest_version
+
     def download(self):
         if path.exists(self.file_url) or path.exists(self.file_url.replace('-unsigned', '')):
             Console.display_message('The current version is already downloaded')
         else:
+            if not self.__latest__:
+                latest_version = self.__get_latest_version_number__()
+
+                if int(latest_version) - int(self.__build_version__) >= 5:
+                    Console.display_error(
+                        f'The given version ({self.__build_version__}) is not available for download, '
+                        f'oldest available: {int(latest_version) - 4}')
+                if int(latest_version) < int(self.__build_version__):
+                    Console.display_error(f'The given version ({self.__build_version__}) does not exist')
+
             Console.display_message(
                 f'Downloading from: {self.__base_url__ + self.__download_url__} (it can take a few minutes)')
             apk = get(self.__base_url__ + self.__download_url__, verify=False)
