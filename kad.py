@@ -45,6 +45,10 @@ class Krita:
             self.__build_version__ = 'undefined'
 
             res = get(self.__base_url__, verify=False)
+
+            if res.status_code is not 200:
+                Console.display_error(f'Version check failed, response statue: {res.status_code}')
+
             res = str(res.content).split("\\n")
             for item in res:
                 if 'Last stable build' in item:
@@ -66,6 +70,9 @@ class Krita:
             Console.display_message(
                 f'Downloading from: {self.__base_url__ + self.__download_url__} (it can take a few minutes)')
             apk = get(self.__base_url__ + self.__download_url__, verify=False)
+
+            if apk.status_code is not 200:
+                Console.display_error(f'Download failed, response status: {apk.status_code}')
 
             Console.display_message('Saving the downloaded file')
             open(self.file_url, 'wb').write(apk.content)
@@ -133,8 +140,10 @@ class Device:
             except CalledProcessError:
                 Console.display_error('An error has occured during device checking')
 
-    def uninstall(self, app_name, keep=''):
+    def uninstall(self, app_name):
         if self.__to_uninstall__ and self.__to_install__:
+            keep = input("Do you want the keep all user data? [Y/n] ")
+
             Console.display_message('Uninstalling old version')
 
             if keep.lower() is not 'n' and keep.lower() is not 'no':
@@ -178,8 +187,7 @@ def main():
                config.get("keystore_config", "password"),
                config.get("keystore_config", "name"))
 
-    keep = input("Do you want the keep all user data? [Y/n] ")
-    device.uninstall(krita.app_name, keep)
+    device.uninstall(krita.app_name)
     device.install(krita.file_url, krita.app_name)
 
     Console.display_message('Done!')
