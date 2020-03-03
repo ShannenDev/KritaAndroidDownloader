@@ -47,7 +47,7 @@ class Krita:
             self.__build_version__ = version
             self.__latest__ = False
 
-        if not file_path[-1] is '/' and file_path[-1] is not '\\':
+        if not file_path[-1] == '/' and file_path[-1] != '\\':
             file_path += '/'
 
         self.file_url = f'{file_path}krita_build_apk-release-{self.__build_version__}-unsigned.apk'
@@ -58,8 +58,8 @@ class Krita:
 
         res = get(self.__base_url__, verify=False)
 
-        if res.status_code is not 200:
-            Console.display_error(f'Version check failed, response statue: {res.status_code}')
+        if res.status_code != 200:
+            Console.display_error(f'Version check failed, response status: {res.status_code}')
 
         res = str(res.content).split("\\n")
         for item in res:
@@ -67,6 +67,7 @@ class Krita:
                 latest_version = item.split('(')[1].split(')')[0].replace('#', '')
                 Console.display_message(f'Latest version: {latest_version}')
                 return latest_version
+        Console.display_error('Latest version was not found')
 
     def download(self):
         if path.exists(self.file_url) or path.exists(self.file_url.replace('-unsigned', '')):
@@ -86,7 +87,7 @@ class Krita:
                 f'Downloading from: {self.__base_url__ + self.__download_url__} (it can take a few minutes)')
             apk = get(self.__base_url__ + self.__download_url__, verify=False)
 
-            if apk.status_code is not 200:
+            if apk.status_code != 200:
                 Console.display_error(f'Download failed, response status: {apk.status_code}')
 
             Console.display_message('Saving the downloaded file')
@@ -161,7 +162,7 @@ class Device:
 
             Console.display_message('Uninstalling old version')
 
-            if keep.lower() is not 'n' and keep.lower() is not 'no':
+            if keep.lower() != 'n' and keep.lower() != 'no':
                 uninstall_status = str(check_output(['adb', 'shell', 'cmd', 'package', 'uninstall', '-k', app_name]))
             else:
                 uninstall_status = str(check_output(['adb', 'shell', 'cmd', 'package', 'uninstall', app_name]))
