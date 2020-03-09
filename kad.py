@@ -34,7 +34,6 @@ class Config:
 
 class Krita:
     __base_url__ = "https://binary-factory.kde.org/job/Krita_Nightly_Android_Build/"
-    __last_successful__ = "lastSuccessfulBuild"
     __latest__ = False
 
     app_name = 'org.krita'
@@ -42,7 +41,7 @@ class Krita:
 
     def __init__(self, file_path, version=''):
         if not version:
-            self.__build_version__ = self.__last_successful__
+            self.__build_version__ = self.__get_latest_version_number__()
             self.__latest__ = True
         else:
             self.__build_version__ = version
@@ -64,8 +63,9 @@ class Krita:
 
         res = str(res.content).split("\\n")
         for item in res:
-            if 'Last stable build' in item:
-                latest_version = item.split('(')[1].split(')')[0].replace('#', '')
+            m = re.search(r'Last stable build \(#(\d+)\)', item)
+            if m:
+                latest_version = m.group(1)
                 Utils.display_message(f'Latest version: {latest_version}')
                 return latest_version
         Utils.display_error_and_terminate('Latest version was not found')
