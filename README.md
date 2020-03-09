@@ -37,7 +37,7 @@ password = pwd
 If you want to automatically install it on your tablet and all the requirements are fulfilled, you just need to connect your device via a USB cable to your PC.\
 \
 Then just run the script (or the exe on Windows). 
-It will ask for the desired version, which means the build number. The default is the latest.\
+It will ask for the desired version, which means the build number. The default is the latest successful build.\
 It will save the self-signed APK to the location specified in the config file.
 You can now copy it to your tablet if you didn't do the automated installation. In this case you will also need to enable installation from foreign sources in the security settings.\
 \

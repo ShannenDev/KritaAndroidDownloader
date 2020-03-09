@@ -28,12 +28,13 @@ class Config:
         self.__config__ = configparser.RawConfigParser()
         self.__config__.read('krita.config')
 
-    def get(self, config_name, valuse_name):
-        return self.__config__.get(config_name, valuse_name)
+    def get(self, config_name, values_name):
+        return self.__config__.get(config_name, values_name)
 
 
 class Krita:
     __base_url__ = "https://binary-factory.kde.org/job/Krita_Nightly_Android_Build/"
+    __last_successful__ = "lastSuccessfulBuild"
     __latest__ = False
 
     app_name = 'org.krita'
@@ -41,7 +42,7 @@ class Krita:
 
     def __init__(self, file_path, version=''):
         if not version:
-            self.__build_version__ = self.__get_latest_version_number__()
+            self.__build_version__ = self.__last_successful__
             self.__latest__ = True
         else:
             self.__build_version__ = version
@@ -88,6 +89,9 @@ class Krita:
             apk = get(self.__base_url__ + self.__download_url__, verify=False)
 
             if apk.status_code != 200:
+                if apk.status_code == 403:
+                    Utils.display_error_and_terminate(
+                        f'Download failed, possible reason is failed build, try another version')
                 Utils.display_error_and_terminate(f'Download failed, response status: {apk.status_code}')
 
             Utils.display_message('Saving the downloaded file')
