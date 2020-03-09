@@ -28,8 +28,8 @@ class Config:
         self.__config__ = configparser.RawConfigParser()
         self.__config__.read('krita.config')
 
-    def get(self, config_name, valuse_name):
-        return self.__config__.get(config_name, valuse_name)
+    def get(self, config_name, values_name):
+        return self.__config__.get(config_name, values_name)
 
 
 class Krita:
@@ -63,8 +63,9 @@ class Krita:
 
         res = str(res.content).split("\\n")
         for item in res:
-            if 'Last stable build' in item:
-                latest_version = item.split('(')[1].split(')')[0].replace('#', '')
+            m = re.search(r'Last stable build \(#(\d+)\)', item)
+            if m:
+                latest_version = m.group(1)
                 Utils.display_message(f'Latest version: {latest_version}')
                 return latest_version
         Utils.display_error_and_terminate('Latest version was not found')
@@ -88,6 +89,9 @@ class Krita:
             apk = get(self.__base_url__ + self.__download_url__, verify=False)
 
             if apk.status_code != 200:
+                if apk.status_code == 403:
+                    Utils.display_error_and_terminate(
+                        f'Download failed, possible reason is failed build, try another version')
                 Utils.display_error_and_terminate(f'Download failed, response status: {apk.status_code}')
 
             Utils.display_message('Saving the downloaded file')
